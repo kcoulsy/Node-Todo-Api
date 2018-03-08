@@ -35,15 +35,15 @@ app.get('/todos/:id', (req,res) => {
 
 
   if(!ObjectID.isValid(id)){
-    res.sendStatus(404);
+    return res.sendStatus(404);
   } else {
     Todo.findById(id).then((todo)=>{
       if(!todo){
         res.sendStatus(404);
       }
-      res.send(todo);
+      res.send({todo});
     }).catch((e) => {
-      res.sendStatus(400);
+      res.status(400).send();
     });
 
   }
