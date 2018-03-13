@@ -35,43 +35,67 @@ var UserSchema = new mongoose.Schema({
 
 
 UserSchema.methods.toJSON = function () {
+  //overriding what is returned when the document is converted to json.
+  //ie. if we return a json (as we do), we're going to pick out the id and email only to send
   var user = this;
-  var userObject = user.toObject();
+  var userObject = user.toObject();//creates an object of the user
 
   return _.pick(userObject, ['_id','email']);
 }
+
+//Generaates an auth token to send back to the user when they make a request
+//uses function() rather than es6, as we need the this. keyword.
 UserSchema.methods.generateAuthToken = function() {
+  //get the document the use method was called on
   var user = this;
+  //set the access property
   var access = 'auth';
+  //use jwt to create a token, using jwt.sign, using the data of id and the access property.
+  //Secret key is temporarily set to 'abc', set it to a string to return in back
   var token = jwt.sign({_id: user._id.toHexString(), access}, 'abc').toString();
 
+  //add this new token to the tokens array within the user document.
+  // .push is inconsistent. Just concat it to the array
   user.tokens = user.tokens.concat([{access, token}]);
 
+  //save it to the database. Using a callback function, we can return token to we can use it in server.js
   return user.save().then(() => {
     return token;
   });
 };
 
+//using statics as it is a model method rather than a instance methods
+//instance methods require the data, this doesn't
 UserSchema.statics.findByToken = function (token){
+  //the model is bound to this
   var User = this;
-  var decoded;
+  var decoded; //stores the decoded jwt values
 
+  //the verify method will throw an error if it fails so using a try catch block
   try {
+    //so try jwt.verify using the token and the same secret that was set in
+    //generateAuthToken, if it fails it moves forward else it sets it to decoded
     decoded = jwt.verify(token, 'abc');
   } catch (e) {
     return Promise.reject();
   }
 
+  //if we were able to decoded it, we will return the user found so we can use .then in server.js
   return User.findOne({
     '_id': decoded._id,
     'tokens.token': token,
-    'tokens.access': 'auth'
+    'tokens.access': 'auth' //quotes required when a . in the label
   });
 }
 
+//using this to hash the password, using bcrypt as it salts it automatically
+//mongoose middleware, this 'pre' will run before we do the 'save' method. Using function(next) because we need
+//to use the this. and 'next' is required or it will be stuck here
 UserSchema.pre('save', function(next){
   var user = this;
 
+  //we don't want to rehash our hashed password.
+  //in this case isModified is going from nothing to something = modified.
   if(user.isModified('password')){
     bcrypt.genSalt(10, (err,salt) => {
       bcrypt.hash(user.password, salt, (err, hash) => {
@@ -83,6 +107,8 @@ UserSchema.pre('save', function(next){
     next();
   }
 });
+
+
 var User = mongoose.model('Users', UserSchema);
 
 
