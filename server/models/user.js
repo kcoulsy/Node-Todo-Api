@@ -65,6 +65,16 @@ UserSchema.methods.generateAuthToken = function() {
   });
 };
 
+UserSchema.methods.removeToken = function(token) {
+  var user = this;
+
+  return user.update({
+    $pull: {
+      tokens: {token}
+    }
+  });
+}
+
 //using statics as it is a model method rather than a instance methods
 //instance methods require the data, this doesn't
 UserSchema.statics.findByToken = function (token){
@@ -139,6 +149,9 @@ UserSchema.statics.findByCredentials = function(email, password) {
     });
   });
 }
+
+
+
 
 var User = mongoose.model('Users', UserSchema);
 
