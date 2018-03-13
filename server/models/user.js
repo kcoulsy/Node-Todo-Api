@@ -52,6 +52,7 @@ UserSchema.methods.generateAuthToken = function() {
   var access = 'auth';
   //use jwt to create a token, using jwt.sign, using the data of id and the access property.
   //Secret key is temporarily set to 'abc', set it to a string to return in back
+  //this key is also in seed.js and in the generateAuthToken method.
   var token = jwt.sign({_id: user._id.toHexString(), access}, 'abc').toString();
 
   //add this new token to the tokens array within the user document.
