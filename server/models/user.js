@@ -53,7 +53,7 @@ UserSchema.methods.generateAuthToken = function() {
   //use jwt to create a token, using jwt.sign, using the data of id and the access property.
   //Secret key is temporarily set to 'abc', set it to a string to return in back
   //this key is also in seed.js and in the generateAuthToken method.
-  var token = jwt.sign({_id: user._id.toHexString(), access}, 'abc').toString();
+  var token = jwt.sign({_id: user._id.toHexString(), access}, process.env.JWT_SECRET).toString();
 
   //add this new token to the tokens array within the user document.
   // .push is inconsistent. Just concat it to the array
@@ -86,7 +86,7 @@ UserSchema.statics.findByToken = function (token){
   try {
     //so try jwt.verify using the token and the same secret that was set in
     //generateAuthToken, if it fails it moves forward else it sets it to decoded
-    decoded = jwt.verify(token, 'abc');
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
   } catch (e) {
     return Promise.reject();
   }
