@@ -142,6 +142,25 @@ app.get ('/users/me', authenticate, (req, res)=>{
 
 });
 
+
+//POST /users/login {email, password}
+app.post('/users/login', (req,res) => {
+  var body = _.pick(req.body, ['email','password']);
+
+  //verify user exists with email and password
+  User.findByCredentials(body.email, body.password).then((user) =>{
+    //exactly same as above
+    return user.generateAuthToken().then((token) => {
+      res.header('x-auth', token).send(user);
+    });
+  }).catch((e)=>{
+    res.status(400).send();
+  });
+  //then compare hashed password
+  //res.send(body);
+});
+
+
 app.listen(port, () => {
   console.log(`Started on port ${port}`);
 })

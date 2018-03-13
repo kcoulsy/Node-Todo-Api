@@ -110,6 +110,36 @@ UserSchema.pre('save', function(next){
 });
 
 
+UserSchema.statics.findByCredentials = function(email, password) {
+  var User = this;
+
+  //first find a user with the same email. Returning this function to use .then and callback
+  //to the server.js
+  return User.findOne({email}).then((user) =>{
+
+    //no user = reject. will trigger the catch(e) and return a 400
+    if(!user){
+      return Promise.reject();
+    }
+
+    //now to check the password is the same. Using a promise here but bycrypt uses callbacks
+    //create a new Promise to use reject() and resolve()
+    return new Promise((resolve, reject) =>{
+      //compare the inputted password with the one that was found
+      bcrypt.compare(password, user.password, (err, res)=>{
+        //if res = true then resolve else reject
+        if(res){
+          resolve(user);
+        } else {
+          reject();
+        }
+
+        //rejecting would skip it to the catch(e) block, else it will return the user id/email
+      });
+    });
+  });
+}
+
 var User = mongoose.model('Users', UserSchema);
 
 
