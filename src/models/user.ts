@@ -2,7 +2,7 @@ import { isEmail } from 'validator';
 import jwt from 'jsonwebtoken';
 import _ from 'lodash';
 import bcrypt from 'bcryptjs';
-import { mongoose } from '../db/mongoose';
+import mongoose from '../db/mongoose';
 import { InferSchemaType } from 'mongoose';
 
 const UserSchema = new mongoose.Schema({

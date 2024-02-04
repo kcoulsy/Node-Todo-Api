@@ -1,4 +1,4 @@
-import { mongoose } from '../db/mongoose';
+import mongoose from '../db/mongoose';
 
 const schema = new mongoose.Schema({
   text: {

@@ -65,4 +65,4 @@ router.delete('/me/token', authenticate, async (req: Request, res) => {
   }
 });
 
-module.exports = router;
+export default router;

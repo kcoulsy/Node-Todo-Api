@@ -1,11 +1,11 @@
 import { NextFunction, Request, Response } from 'express';
 import { findByToken } from '../models/user';
 
-export const authenticate = async (
+export async function authenticate(
   req: Request,
   res: Response,
   next: NextFunction,
-) => {
+) {
   const token = req.header('x-auth');
 
   if (!token) {
@@ -24,4 +24,4 @@ export const authenticate = async (
   req.token = token;
 
   next();
-};
+}
