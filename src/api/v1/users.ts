@@ -1,11 +1,11 @@
 import express, { Request } from 'express';
-import { authenticate } from '../middleware/authenticate';
+import { authenticate } from '../../middleware/authenticate.middleware';
 import {
   User,
   generateAndSaveAuthToken,
   findByCredentials,
   removeTokenFromUser,
-} from '../models/user';
+} from '../../models/user';
 import _ from 'lodash';
 
 const router = express.Router();
