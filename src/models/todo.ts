@@ -1,6 +1,6 @@
-const { mongoose } = require('../db/mongoose');
+import { mongoose } from '../db/mongoose';
 
-var Todo = mongoose.model('Todo', {
+const schema = new mongoose.Schema({
   text: {
     type: String,
     required: true,
@@ -20,4 +20,4 @@ var Todo = mongoose.model('Todo', {
   },
 });
 
-module.exports = { Todo };
+export const Todo = mongoose.model('Todo', schema);
