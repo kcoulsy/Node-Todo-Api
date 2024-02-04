@@ -1,7 +1,7 @@
-import express from 'express';
+import Router from 'express-promise-router';
 import v1router from './v1';
 
-const router = express.Router();
+const router = Router();
 
 router.use('/v1', v1router);
 
