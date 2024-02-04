@@ -1,28 +1,27 @@
-import express, { Request } from 'express';
+import express from 'express';
 import { authenticate } from '../../middleware/authenticate.middleware';
-import {
-  User,
-  generateAndSaveAuthToken,
-  findByCredentials,
-  removeTokenFromUser,
-} from '../../models/user';
 import _ from 'lodash';
+import {
+  clearUserTokens,
+  loginUser,
+  registerUser,
+} from '../../services/user.service';
 
 const router = express.Router();
 
-router.post('/', async (req, res) => {
+router.post('/', async (req, res, next) => {
   var body = _.pick(req.body, ['email', 'password']);
-  var user = new User(body);
 
   try {
+    const { user, token } = await registerUser({
+      email: body.email,
+      password: body.password,
+    });
     await user.save();
-
-    const token = await generateAndSaveAuthToken(user._id.toHexString());
 
     res.header('x-auth', token).send(user);
   } catch (e) {
-    console.log(e);
-    res.status(400).send(e);
+    next(e);
   }
 });
 
@@ -31,37 +30,28 @@ router.get('/me', authenticate, (req, res) => {
   res.send(req.user);
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', async (req, res, next) => {
   var body = _.pick(req.body, ['email', 'password']);
 
-  console.log('logging in', body.email);
-
   try {
-    const user = await findByCredentials(body.email, body.password);
-
-    const token = await generateAndSaveAuthToken(user._id.toHexString());
+    const { user, token } = await loginUser({
+      email: body.email,
+      password: body.password,
+    });
 
     res.header('x-auth', token).send(user);
   } catch (e) {
-    console.log(e);
-    res.status(400).send(e);
+    next(e);
   }
 });
 
-router.delete('/me/token', authenticate, async (req: Request, res) => {
-  const token = req.header('x-auth');
-
-  if (!token) {
-    return res.status(400).send();
-  }
-
+router.delete('/logout', authenticate, async (req, res, next) => {
   try {
     // @ts-ignore
-    await removeTokenFromUser(token, req.user._id.toHexString());
-    res.status(200).send();
+    await clearUserTokens({ userId: req.user._id.toHexString() });
+    res.header('x-auth', '').status(200).send();
   } catch (e) {
-    console.log(e);
-    res.status(400).send(e);
+    next(e);
   }
 });
 

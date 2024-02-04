@@ -2,7 +2,7 @@ const { ObjectID } = require('mongodb');
 const jwt = require('jsonwebtoken');
 
 const { Todo } = require('../../models/todo.model');
-const { User } = require('./../../models/user');
+const { User } = require('../../models/user.model');
 
 const userOneId = new ObjectID();
 const userTwoId = new ObjectID();
