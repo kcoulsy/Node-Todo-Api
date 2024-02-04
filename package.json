@@ -9,7 +9,7 @@
     "test-watch": "nodemon --exec \"npm test\""
   },
   "engines": {
-    "node": "9.5.0"
+    "node": "18.x"
   },
   "author": "",
   "license": "ISC",
@@ -17,11 +17,12 @@
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.15.2",
     "crypto-js": "^3.1.9-1",
+    "dotenv": "^16.4.1",
     "express": "^4.14.0",
     "jsonwebtoken": "^8.2.0",
     "lodash": "^4.17.5",
     "mongodb": "^2.2.5",
-    "mongoose": "^4.5.9",
+    "mongoose": "^8.1.1",
     "npm": "^5.7.1",
     "validator": "^9.4.1"
   },
