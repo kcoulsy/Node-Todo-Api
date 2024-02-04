@@ -1,0 +1,6 @@
+{
+  "watch": ["src"],
+  "exclude": ["src/public/*"],
+  "ext": "ts,css,js,json",
+  "exec": "concurrently \"npx tsc --watch\" \"ts-node src/server.js\""
+}

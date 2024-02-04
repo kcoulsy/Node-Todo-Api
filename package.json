@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node server/server.js",
+    "start": "node dist/index.js",
+    "dev": "nodemon src/index.js",
     "test": "export NODE_ENV=test || SET \"NODE_ENV=test\" && mocha server/**/*.test.js",
     "test-watch": "nodemon --exec \"npm test\""
   },
@@ -27,9 +28,13 @@
     "validator": "^9.4.1"
   },
   "devDependencies": {
+    "@types/node": "^20.10.6",
     "expect": "^1.20.2",
+    "concurrently": "^8.2.2",
     "mocha": "^3.0.2",
-    "nodemon": "^1.10.2",
-    "supertest": "^2.0.0"
+    "nodemon": "^3.0.2",
+    "supertest": "^2.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
   }
 }
