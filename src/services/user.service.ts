@@ -1,8 +1,10 @@
 import bcrypt from 'bcryptjs';
-import { User } from '../models/user.model';
 import jwt from 'jsonwebtoken';
 import { UnauthorizedError } from '../errors/Unauthorized';
 import { NotFoundError } from '../errors/NotFound';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 interface RegisterUser {
   email: string;
@@ -19,12 +21,12 @@ export async function registerUser({ email, password }: RegisterUser) {
 
   const hashedPassword = await hashPassword(password);
 
-  const user = new User({
-    email,
-    password: hashedPassword,
+  await prisma.user.create({
+    data: {
+      email: email,
+      password: hashedPassword,
+    },
   });
-
-  await user.save();
 
   return loginUser({ email, password });
 }
@@ -47,58 +49,69 @@ export async function loginUser({ email, password }: LoginUser) {
     throw new UnauthorizedError();
   }
 
-  await clearUserTokens({ userId: user._id.toHexString() });
+  const accessToken = await generateAccessToken(user.id);
+  const refreshToken = await generateRefreshToken(user.id);
 
-  const token = await generateAuthToken(user._id.toHexString());
-
-  user.tokens.push({ access: 'auth', token });
-
-  return { user, token };
+  return { user, accessToken, refreshToken };
 }
 
 interface LogoutUser {
   userId: string;
 }
 
-export async function clearUserTokens({ userId }: LogoutUser) {
+export async function clearUserRefreshToken({ userId }: LogoutUser) {
   const user = await findUserById(userId);
 
   if (!user) {
     throw new NotFoundError();
   }
 
-  return user.updateOne({
-    $pull: {
-      tokens: { userId },
+  await prisma.user.update({
+    where: {
+      id: userId,
+    },
+    data: {
+      refreshToken: null,
+    },
+  });
+}
+
+export async function setUserRefreshToken({
+  userId,
+  refreshToken,
+}: {
+  userId: string;
+  refreshToken: string;
+}) {
+  const user = await findUserById(userId);
+
+  if (!user) {
+    throw new NotFoundError();
+  }
+
+  await prisma.user.update({
+    where: {
+      id: userId,
+    },
+    data: {
+      refreshToken: refreshToken,
     },
   });
 }
 
 export async function findUserByEmail(email: string) {
-  const user = await User.findOne({
-    email,
+  return prisma.user.findUnique({
+    where: {
+      email: email,
+    },
   });
-
-  if (!user) {
-    throw new NotFoundError();
-  }
-
-  return user;
 }
 
 export async function findUserById(userId: string) {
-  const user = await User.findById(userId);
-
-  if (!user) {
-    throw new NotFoundError();
-  }
-
-  return user;
-}
-
-export async function findByToken(token: string) {
-  const user = await User.findOne({
-    'tokens.token': token,
+  const user = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
   });
 
   if (!user) {
@@ -108,8 +121,25 @@ export async function findByToken(token: string) {
   return user;
 }
 
-async function generateAuthToken(userId: string) {
-  return jwt.sign({ _id: userId }, process.env.JWT_SECRET || 'secret');
+export async function generateAccessToken(userId: string) {
+  return jwt.sign({ _id: userId }, process.env.JWT_SECRET || 'secret', {
+    expiresIn: '15 minutes',
+  });
+}
+
+export async function generateRefreshToken(userId: string) {
+  return jwt.sign({ _id: userId }, process.env.JWT_SECRET || 'secret', {
+    expiresIn: '7 days',
+  });
+}
+
+export async function verifyToken(token: string) {
+  const payload = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+
+  return {
+    // @ts-ignore
+    userId: payload._id,
+  } as { userId: string };
 }
 
 async function hashPassword(password: string) {

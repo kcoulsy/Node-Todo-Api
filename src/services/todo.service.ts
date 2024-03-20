@@ -1,6 +1,8 @@
 import { NotFoundError } from '../errors/NotFound';
 import { UnauthorizedError } from '../errors/Unauthorized';
-import { Todo } from '../models/todo.model';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 export async function createTodo({
   text,
@@ -13,18 +15,26 @@ export async function createTodo({
   completedAt: number | null;
   userId: string;
 }) {
-  const todo = new Todo({
-    text,
-    complete: isComplete,
-    completedAt,
-    _creator: userId,
+  return prisma.todo.create({
+    data: {
+      text,
+      isComplete,
+      completedAt: completedAt ? new Date(completedAt) : null,
+      user: {
+        connect: {
+          id: userId,
+        },
+      },
+    },
   });
-
-  return todo.save();
 }
 
 export async function getTodosForUserId(userId: string) {
-  const todo = await Todo.find({ _creator: userId });
+  const todo = await prisma.todo.findMany({
+    where: {
+      userId,
+    },
+  });
 
   if (!todo) {
     throw new NotFoundError();
@@ -34,7 +44,11 @@ export async function getTodosForUserId(userId: string) {
 }
 
 export async function getTodoById(id: string) {
-  const todo = await Todo.findOne({ _id: id });
+  const todo = await prisma.todo.findUnique({
+    where: {
+      id,
+    },
+  });
 
   if (!todo) {
     throw new NotFoundError();
@@ -50,12 +64,15 @@ export async function deleteTodoById(id: string, userId: string) {
     throw new NotFoundError();
   }
 
-  console.log(todo?._creator?.toString(), userId);
-  if (todo?._creator?.toString() !== userId) {
+  if (todo?.userId !== userId) {
     throw new UnauthorizedError();
   }
 
-  return Todo.findOneAndDelete({ _id: id });
+  return prisma.todo.delete({
+    where: {
+      id,
+    },
+  });
 }
 
 export async function updateTodoById(
@@ -69,15 +86,20 @@ export async function updateTodoById(
     throw new NotFoundError();
   }
 
-  if (todo?._creator?.toString() !== userId) {
+  if (todo?.userId !== userId) {
     throw new UnauthorizedError();
   }
 
   const completedAt = updates.isComplete ? new Date().getTime() : null;
 
-  return Todo.findOneAndUpdate(
-    { _id: id },
-    { $set: { text: updates.text, complete: updates.isComplete, completedAt } },
-    { new: true },
-  );
+  return prisma.todo.update({
+    where: {
+      id,
+    },
+    data: {
+      text: updates.text,
+      isComplete: updates.isComplete,
+      completedAt: completedAt ? new Date(completedAt) : null,
+    },
+  });
 }

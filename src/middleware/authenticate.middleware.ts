@@ -1,31 +1,29 @@
 import { NextFunction, Request, Response } from 'express';
-import { findByToken } from '../services/user.service';
+import { verifyToken } from '../services/user.service';
+
+declare module 'express-serve-static-core' {
+  interface Request {
+    userId?: string;
+  }
+}
 
 export async function authenticate(
   req: Request,
   res: Response,
   next: NextFunction,
 ) {
-  const token = req.header('x-auth');
+  const token = req.header('Authorization')?.replace('Bearer ', '');
 
   if (!token) {
     return res.status(401).send({
-      error: 'Missing x-auth header',
+      error: 'Missing Authorization header',
     });
   }
 
   try {
-    const user = await findByToken(token);
-    if (!user) {
-      return res.status(401).send({
-        error: 'Token invalid',
-      });
-    }
+    const { userId } = await verifyToken(token);
 
-    // @ts-ignore
-    req.user = user;
-    // @ts-ignore
-    req.token = token;
+    req.userId = userId;
 
     next();
   } catch (e) {

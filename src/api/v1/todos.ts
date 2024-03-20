@@ -14,26 +14,24 @@ import { NotFoundError } from '../../errors/NotFound';
 
 const router = Router();
 
-router.post('/', authenticate, async (req, res, next) => {
+router.post('/', authenticate, async (req, res) => {
   const todo = await createTodo({
     text: req.body.text,
     isComplete: false,
     completedAt: null,
-    // @ts-ignore
-    userId: req.user._id.toString(),
+    userId: req.userId || '',
   });
 
   res.send(todo);
 });
 
-router.get('/', authenticate, async (req, res, next) => {
-  // @ts-ignore
-  const todos = await getTodosForUserId(req.user._id.toString());
+router.get('/', authenticate, async (req, res) => {
+  const todos = await getTodosForUserId(req.userId || '');
 
   res.send({ todos });
 });
 
-router.get('/:id', authenticate, async (req, res, next) => {
+router.get('/:id', authenticate, async (req, res) => {
   var id = req.params.id;
 
   if (!isValidObjectId(id)) {
@@ -42,28 +40,26 @@ router.get('/:id', authenticate, async (req, res, next) => {
 
   const todo = await getTodoById(id);
 
-  // @ts-ignore
-  if (todo?._creator?.toString() !== req.user._id.toString()) {
+  if (todo?.userId !== req.userId) {
     throw new UnauthorizedError();
   }
 
   res.send({ todo });
 });
 
-router.delete('/:id', authenticate, async (req, res, next) => {
+router.delete('/:id', authenticate, async (req, res) => {
   var id = req.params.id;
 
   if (!isValidObjectId(id)) {
     return res.status(404).send();
   }
 
-  // @ts-ignore
-  const todo = await deleteTodoById(id, req.user._id.toString());
+  const todo = await deleteTodoById(id, req.userId || '');
 
   res.send({ todo });
 });
 
-router.put('/:id', authenticate, async (req, res, next) => {
+router.put('/:id', authenticate, async (req, res) => {
   var id = req.params.id;
   var body = _.pick(req.body, ['text', 'complete']);
 
@@ -71,8 +67,7 @@ router.put('/:id', authenticate, async (req, res, next) => {
     return res.status(404).send();
   }
 
-  // @ts-ignore
-  const todo = await updateTodoById(id, req.user._id.toString(), {
+  const todo = await updateTodoById(id, req.userId || '', {
     text: body.text,
     isComplete: body.complete,
   });
